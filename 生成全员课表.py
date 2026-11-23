@@ -42,6 +42,9 @@ KDOCS_URL = "https://www.kdocs.cn/l/co6ZLHXYhHuL"
 KDOCS_FILE_ID = "mz1ofYQ1q1MXuz9B8oMz1xsgDoo8HT5vY"
 
 BASE_DIR = Path(__file__).resolve().parent
+# 一律按北京时间算"今天/现在"。GitHub Actions 的机器是 UTC，
+# 直接 datetime.now() 会差 8 小时（早上 06:30 那次甚至会算成前一天）。
+CN_TZ = dt.timezone(dt.timedelta(hours=8))
 # 沿用「课表工具」里已经下好的源表和 cookie，避免重复配置
 TOOL_DIR = BASE_DIR.parent / "workbubby" / "课表工具"
 SOURCE_DEFAULT = TOOL_DIR / "课表源文件" / "26年度上学期课表.xlsx"
@@ -105,6 +108,11 @@ def to_date(value, today):
         if cands:
             return min(cands, key=lambda c: abs((c - today).days))   # 表里不带年份，取离今天最近的
     return None
+
+
+def cn_now():
+    """当前北京时间（不受机器时区影响）。"""
+    return dt.datetime.now(CN_TZ)
 
 
 def time_start(header):
@@ -279,7 +287,7 @@ def build_payload(teachers, today):
         payload["teachers"][name] = {"sheet": info["sheet"], "days": days}
 
     payload.update({
-        "generatedAt": dt.datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "generatedAt": cn_now().strftime("%Y-%m-%d %H:%M"),
         "generatedDate": today.isoformat(),
         "source": "金山文档 · 26年度上学期课表",
         "teacherCount": len(payload["teachers"]),
@@ -296,7 +304,7 @@ def main():
     ap.add_argument("--out-dir", default=None, help="输出目录，默认 ./data")
     args = ap.parse_args()
 
-    today = dt.date.today()
+    today = cn_now().date()
     src = get_source(args.file, args.refresh)
     wb = openpyxl.load_workbook(src, data_only=True)
 

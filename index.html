@@ -562,7 +562,7 @@ window.__djBoot = function(){
   }
 
   setInterval(checkVersion, 5 * 60 * 1000);          // 每 5 分钟查一次版本（只拉几十字节）
-  setTimeout(checkVersion, 8000);                     // 首屏可能命中缓存，8 秒后补一次
+  setTimeout(checkVersion, 1500);                     // 首屏可能命中缓存，1.5 秒后就补一次
   document.addEventListener("visibilitychange", function(){
     if (!document.hidden) checkVersion();             // 切回前台立刻校验
   });
@@ -572,7 +572,10 @@ window.__djBoot = function(){
 (function(){
   function p2(n){ return ("0" + n).slice(-2); }
   var d = new Date();
-  var key = "" + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate());   // 每天一个新版本号
+  // 版本号精确到分钟：一天要更新三次（6:30 / 12:00 / 22:00），
+  // 只用日期的话，同一天内更新后浏览器还会拿 10 分钟前的缓存。
+  var key = "" + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate())
+              + p2(d.getHours()) + p2(d.getMinutes());
   var el = document.createElement("script");
   el.src = "data/all_teachers.js?v=" + key;
   el.onload = function(){

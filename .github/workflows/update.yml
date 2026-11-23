@@ -1,0 +1,48 @@
+name: 更新课表数据
+
+# 每天北京时间 06:30 自动跑；也可以在 Actions 页面手动点 Run workflow
+on:
+  schedule:
+    - cron: "30 22 * * *"     # UTC 22:30 = 北京时间次日 06:30
+  workflow_dispatch:
+
+# 必须给写权限，否则最后一步 git push 会 403
+permissions:
+  contents: write
+
+# 上一次没跑完时不要叠加
+concurrency:
+  group: update-schedule
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取仓库
+        uses: actions/checkout@v4
+
+      - name: 装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 装依赖
+        run: pip install openpyxl
+
+      - name: 从金山文档拉最新表并生成 data/
+        env:
+          WPS_COOKIE: ${{ secrets.WPS_COOKIE }}
+        run: python "生成全员课表.py" --refresh
+
+      - name: 提交并推送
+        run: |
+          git config user.name  "schedule-bot"
+          git config user.email "schedule-bot@users.noreply.github.com"
+          git add data
+          if git diff --staged --quiet; then
+            echo "数据没有变化，跳过提交"
+          else
+            git commit -m "自动更新课表数据 $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M')"
+            git push
+          fi

@@ -156,14 +156,15 @@
   <header>
     <div class="brand">
       <div class="mark"></div><h1>点金课表</h1>
-      <button class="rf" id="rf" title="重新拉取数据，并按当前时间重算课表">
+      <button class="rf" id="rf" title="重新下载云端数据，并按当前时间重算今天已上/未上（不会去抓金山文档，抓取在云端每天自动跑）">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
              stroke-linecap="round" stroke-linejoin="round">
           <path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 4v7h-7"></path>
         </svg><span>刷新</span>
       </button>
     </div>
-    <p class="sub">选个名字就能看自己的课 · 数据更新于 <b id="meta">—</b></p>
+    <p class="sub">选个名字就能看自己的课 · 数据更新于 <b id="meta">—</b><span
+      id="meta2" style="opacity:.62;font-size:.88em"></span></p>
   </header>
 
   <div class="search">
@@ -275,6 +276,8 @@ window.__djBoot = function(){
   /* ---------- 顶部信息 ---------- */
   function paintMeta(){
     metaEl.textContent = data.generatedAt || "—";
+    var m2 = document.getElementById("meta2");
+    if (m2) m2.textContent = lastRefresh ? " · 本页已按 " + lastRefresh + " 重算" : "";
     footEl.innerHTML =
       "共 " + data.teacherCount + " 位老师、" + data.lessonCount + " 节课 · 数据生成于 " +
       (data.generatedAt || "—") +
@@ -390,7 +393,9 @@ window.__djBoot = function(){
     toastEl.textContent = msg;
     toastEl.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function(){ toastEl.classList.remove("show"); }, 3200);
+    // 文案长了就多留一会儿，免得没看清就消失
+    var ms = Math.min(7000, 3000 + msg.length * 60);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove("show"); }, ms);
   }
 
   /* ---------- 刷新：重新拉数据 + 按当前时间重算 ---------- */
@@ -459,8 +464,9 @@ window.__djBoot = function(){
     loadFresh().then(function(fresh){
       var changed = applyFresh(fresh, before);
       toast(changed
-        ? "已更新到 " + (data.generatedAt || "最新") + " 的数据 · " + lastRefresh
-        : "已刷新 · " + lastRefresh + "（数据没变，生成于 " + (data.generatedAt || "—") + "）");
+        ? "云端有新数据了：" + (data.generatedAt || "最新") + " · 已按现在 " + lastRefresh + " 重算"
+        : "云端还是 " + (data.generatedAt || "—") + " 那份数据（每天 6:30 / 12:00 / 22:00 自动抓）· 已按现在 "
+          + lastRefresh + " 重算今天已上/未上");
     }).catch(function(err){
       recomputeNow();          // 拿不到新数据，也至少按当前时间重算一遍
       applyData();

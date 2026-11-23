@@ -3,8 +3,11 @@ name: 更新课表数据
 # 每天北京时间 06:30 自动跑；也可以在 Actions 页面手动点 Run workflow
 on:
   schedule:
-    - cron: "30 22 * * *"     # UTC 22:30 = 北京时间次日 06:30
+    - cron: "30 22 * * *"     # UTC 22:30 = 北京 06:30
+    - cron: "0 4 * * *"       # UTC 04:00 = 北京 12:00
+    - cron: "0 14 * * *"      # UTC 14:00 = 北京 22:00
   workflow_dispatch:
+
 
 # 必须给写权限，否则最后一步 git push 会 403
 permissions:

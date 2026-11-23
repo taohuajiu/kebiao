@@ -1,13 +1,15 @@
 name: 更新课表数据
 
-# 每天北京时间 06:30 自动跑；也可以在 Actions 页面手动点 Run workflow
+run-name: 抓取课表 ${{ github.event_name == 'workflow_dispatch' && '(手动触发)' || '(每日定时)' }}
+
+# 每天跑三次（北京时间 06:30 / 12:00 / 22:00）；也可以在 Actions 页面手动点 Run workflow
+# 注意 GitHub 的 cron 一律按 UTC，北京 = UTC+8，所以要把小时减 8
 on:
   schedule:
     - cron: "30 22 * * *"     # UTC 22:30 = 北京 06:30
     - cron: "0 4 * * *"       # UTC 04:00 = 北京 12:00
     - cron: "0 14 * * *"      # UTC 14:00 = 北京 22:00
   workflow_dispatch:
-
 
 # 必须给写权限，否则最后一步 git push 会 403
 permissions:
@@ -21,6 +23,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: 拉取仓库
         uses: actions/checkout@v4
@@ -33,6 +36,18 @@ jobs:
       - name: 装依赖
         run: pip install openpyxl
 
+      # 没配 cookie 时直接给出人话报错，而不是最后一步莫名其妙 403
+      - name: 检查 WPS_COOKIE
+        env:
+          WPS_COOKIE: ${{ secrets.WPS_COOKIE }}
+        run: |
+          if [ -z "$WPS_COOKIE" ]; then
+            echo "::error title=缺少 WPS_COOKIE::Settings → Secrets and variables → Actions → New repository secret，名字必须是 WPS_COOKIE"
+            exit 1
+          fi
+          echo "WPS_COOKIE 已配置（长度 ${#WPS_COOKIE}）"
+
+      # --refresh 会真的去金山文档重新下载课表；下载失败会直接报错停下
       - name: 从金山文档拉最新表并生成 data/
         env:
           WPS_COOKIE: ${{ secrets.WPS_COOKIE }}
@@ -46,6 +61,8 @@ jobs:
           if git diff --staged --quiet; then
             echo "数据没有变化，跳过提交"
           else
+            echo "本次变更："
+            git diff --staged --stat
             git commit -m "自动更新课表数据 $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M')"
             git push
           fi

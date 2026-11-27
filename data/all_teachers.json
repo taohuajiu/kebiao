@@ -3099,10 +3099,6 @@
      "weekday": "星期六",
      "classes": [
       {
-       "time": "8:00-10:00",
-       "course": "吴子墨"
-      },
-      {
        "time": "10:10-12:10",
        "course": "王雨嘉"
       },
@@ -4721,7 +4717,29 @@
      "classes": [
       {
        "time": "15:30-17:30",
-       "course": "杜禹然"
+       "course": "杜禹然T"
+      }
+     ]
+    },
+    {
+     "date": "2026-11-28",
+     "dateLabel": "11月28日",
+     "weekday": "星期六",
+     "classes": [
+      {
+       "time": "15:30-17:30",
+       "course": "杨馥依T"
+      }
+     ]
+    },
+    {
+     "date": "2026-11-29",
+     "dateLabel": "11月29日",
+     "weekday": "星期日",
+     "classes": [
+      {
+       "time": "10:10-12:10",
+       "course": "郭宛灵T10.30"
       }
      ]
     }
@@ -5343,9 +5361,9 @@
    ]
   }
  },
- "generatedAt": "2026-11-27 12:24",
+ "generatedAt": "2026-11-27 21:26",
  "generatedDate": "2026-11-27",
  "source": "金山文档 · 26年度上学期课表",
  "teacherCount": 18,
- "lessonCount": 662
+ "lessonCount": 663
 }
